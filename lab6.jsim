@@ -1,0 +1,25 @@
+* CACACHO, Jean Maximus
+* DURON, Joseph Jr
+* ONG, Paolo Gabriel
+
+
+.include "main.jsim"
+
+
+Wa a[31:0] nrz(0, 5, 20ns, 0ns, 0.1ns, 0.1ns)
++ -1 0x55555555 0xAAAAAAAA 1 -2 -1 -1 0x55555555 0 -1 0x55555555 0
++ -1 0x55555555 0 -1 0x55555555 0 -1 0x55555555 0 1 -1 -1 0x55555555 0xAAAAAAAA -1
++ 0x55555555 0xAAAAAAAA -1 -1 15 0 -1 15 0 -1 15 0
+
+Wb b[31:0] nrz(0, 5, 20ns, 0ns, 0.1ns, 0.1ns)
++ 1 0x55555555 0xAAAAAAAA 1 0 -1 -1 0xAAAAAAAA 0 -1 0xAAAAAAAA 0
++ -1 0xAAAAAAAA 0 -1 0xAAAAAAAA 0 -1 0xAAAAAAAA 0 31 15 0 24 24 31
++ 24 24 31 1 15 -256 1 15 -256 1 15 -256
+
+Wf alufn[5:0] nrz(0, 5, 60ns, 0ns, 0.1ns, 0.1ns)
++ 0 1 24 30 22 26 21 32 33 35 51 53 55
+
+.tran 800ns
+.plot a[31:0]
+.plot b[31:0]
+.plot alufn[5:0]

@@ -1,0 +1,71 @@
+* CACACHO, Jean Maximus
+* DURON, Joseph Jr
+* ONG, Paolo Gabriel
+
+
+.include "8clocks.jsim"
+.include "nominal.jsim"
+.include "stdcell.jsim"
+
+
+* full-adder
+.subckt fa a b c_in sum c_out
+Xsub1 a b axorb xor2
+Xsub2 axorb c_in sum xor2
+Xsub3 a b firstnand nand2
+Xsub4 axorb c_in secondnand nand2
+Xsub5 firstnand secondnand c_out nand2
+.ends
+
+
+* 32-bit full-adder
+.subckt add32 a[31:0] b[31:0] c_in0 sum[31:0] c_out[31:30]
+Xsub1 a[31:0] b[31:0] c_out[30:0] c_in0 sum[31:0] c_out[31:0] fa
+.ends
+
+
+* 32-bit increment
+.subckt counter32 reset a[31:0] f[31:0] clk
+Xsum a[31:0] f[31:0] 0 sum[31:0] c31 c30 add32
+Xmux2 reset#32 sum[31:0] 0#32 next_val[31:0] mux2
+Xdreg next_val[31:0] clk#32 f[31:0] dreg
+.ends
+
+
+* 32-bit adder-subtractor
+.subckt as32 a[31:0] b[31:0] op0 fas[31:0] n v z
+Xinvert op0#32 b[31:0] notb[31:0] xor2
+
+Xadd a[31:0] notb[31:0] op0 fas[31:0] c31 c30 add32
+
+.connect fas31 n
+
+Xoverflow c31 c30 v xor2
+
+Xz1 fas[31:0:4] fas[30:0:4] fas[29:0:4] fas[28:0:4] temp[7:0] nor4
+Xz2 temp[7:4] temp[3:0] temp_final[1:0] nand4
+Xz3 temp_final[1:0] z nor2
+.ends
+
+
+* 32-bit comparator
+.subckt cmp32 n v z op[2:1] fcmp[31:0]
+Xsub1 n v nv xor2
+Xsub2 op1 z opz nand2
+Xsub3 op2 nv opnv nand2
+Xsub4 opz opnv fcmp0 nand2
+
+.connect fcmp[31:1] 0
+.ends
+
+* 32-bit bitwise boolean circuit
+.subckt bool32 a[31:0] b[31:0] op[3:0] fbool[31:0]
+.ends
+
+* 32-bit shifter
+.subckt shift32 a[31:0] b[4:0] op[1:0] fshift[31:0]
+.ends
+
+* 32-bit ALU
+.subckt alu32 a[31:0] b[31:0] alufn[5:0] f[31:0]
+.ends

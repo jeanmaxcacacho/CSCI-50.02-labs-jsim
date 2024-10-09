@@ -66,24 +66,20 @@ Xmux4 a[31:0] b[31:0] op0#32 op1#32 op2#32 op3#32 fbool[31:0] mux4
 * 32-bit shifter
 .subckt shift32 a[31:0] b[4:0] op[1:0] fshift[31:0]
 *choose either left or right shift
-Xwhich1 op0#32 a[31:0] a[0:31] c[31:0] mux2 
-Xsign1 a31 op1 sign and2 *determine sign bit
+Xwhich1 op0#32 a[31:0] a[0:31] c[31:0] mux2
+*determine sign bit
+Xsign1 a31 op1 sign and2 
 
 *16-bit shift (to the left)
 Xsixteen1 b4#32 c[31:0] c[15:0] sign#16 d[31:0] mux2 
-
 *8-bit shift
 Xeight1 b3#32 d[31:0] d[23:0] sign#8 e[31:0] mux2 
-
 *4-bit shift
 Xfour1 b2#32 e[31:0] e[27:0] sign#4 f[31:0] mux2 
-
 *2-bit shift
 Xtwo1 b1#32 f[31:0] f[29:0] sign#2 g[31:0] mux2 
-
 *1-bit shift
 Xone1 b0#32 g[31:0] g[30:0] sign h[31:0] mux2
-
 *flip or not again depending on shift chosen
 Xwhich2 op0#32 h[31:0] h[0:31] fshift[31:0] mux2
 .ends

@@ -65,16 +65,34 @@ Xmux4 a[31:0] b[31:0] op0#32 op1#32 op2#32 op3#32 fbool[31:0] mux4
 
 * 32-bit shifter
 .subckt shift32 a[31:0] b[4:0] op[1:0] fshift[31:0]
-Xwhich1 op0#32 a[31:0] a[0:31] c[31:0] mux2 *choose either left or right shift
+*choose either left or right shift
+Xwhich1 op0#32 a[31:0] a[0:31] c[31:0] mux2 
 Xsign1 a31 op1 sign and2 *determine sign bit
-Xsixteen1 b4#32 c[31:0] c[15:0] sign#16 d[31:0] mux2 *16-bit shift (to the left)
-Xeight1 b3#32 d[31:0] d[23:0] sign#8 e[31:0] mux2 *8-bit shift
-Xfour1 b2#32 e[31:0] e[27:0] sign#4 f[31:0] mux2 *4-bit shift
-Xtwo1 b1#32 f[31:0] f[29:0] sign#2 g[31:0] mux2 *2-bit shift
-Xone1 b0#32 g[31:0] g[30:0] sign h[31:0] mux2 *1-bit shift
-Xwhich2 op0#32 h[31:0] h[0:31] fshift[31:0] *flip or not again depending on shift chosen
+
+*16-bit shift (to the left)
+Xsixteen1 b4#32 c[31:0] c[15:0] sign#16 d[31:0] mux2 
+
+*8-bit shift
+Xeight1 b3#32 d[31:0] d[23:0] sign#8 e[31:0] mux2 
+
+*4-bit shift
+Xfour1 b2#32 e[31:0] e[27:0] sign#4 f[31:0] mux2 
+
+*2-bit shift
+Xtwo1 b1#32 f[31:0] f[29:0] sign#2 g[31:0] mux2 
+
+*1-bit shift
+Xone1 b0#32 g[31:0] g[30:0] sign h[31:0] mux2
+
+*flip or not again depending on shift chosen
+Xwhich2 op0#32 h[31:0] h[0:31] fshift[31:0] mux2
 .ends
 
 * 32-bit ALU
 .subckt alu32 a[31:0] b[31:0] alufn[5:0] f[31:0]
+Xas32 a[31:0] b[31:0] alufn0 fas[31:0] n v z as32
+Xbool32 a[31:0] b[31:0] alufn[3:0] fbool[31:0] bool32
+Xshift32 a[31:0] b[4:0] alufn[1:0] fshift[31:0] shift32
+Xcmp32 n v z alufn[2:1] fcmp[31:0] cmp32
+Xop alufn5#32 alufn4#32 fas[31:0] fshift[31:0] fbool[31:0] fcmp[31:0] f[31:0] mux4 
 .ends

@@ -79,7 +79,6 @@ Xregisters  vdd  0    0      ra1_[4:0]  rd1_[31:0]
 *       the werf_ signal is forced OFF; otherwise, it should pass through the
 *       original werf signal.
 *******************************************************************************
-.connect werf werf_
 
 * target value is for werf_ to be 0 when wa[4:0] 0b11111
 

@@ -81,6 +81,15 @@ Xregisters  vdd  0    0      ra1_[4:0]  rd1_[31:0]
 *******************************************************************************
 .connect werf werf_
 
+* target value is for werf_ to be 0 when wa[4:0] 0b11111
+
+* last 4 bits and together, 31 expects 1
+Xsub1 wa[4:1] temp1 and4 
+* if LSB also equals 1, nand will force to off
+Xsub2 temp1 wa0 temp2 nand2 
+* when temp2 off, werf_ automatically gets switched off
+Xsub3 temp2 werf werf_ and2
+
 *******************************************************************************
 * Xcontrol is a read-only memory (ROM) that defines what to feed into the
 * control signal lines of your final Beta circuit, depending on what opcode

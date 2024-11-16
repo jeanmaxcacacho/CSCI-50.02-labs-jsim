@@ -163,3 +163,14 @@ Xjinste inst[15:0]  c[15:0]     join
 * TO-DO: Branch Target
 * Perform a 2-bit shift on the SEXT literal (c[15:0]) then add to Program Counter.
 
+* TO-DO: Z
+* 32-bit NOR gate (see subtractor)
+
+* TO-DO: Memory and Registers
+* Reset logic as well as verifying if the register can be written into (recall verifying r31)
+
+* TO-DO: MUX for Control Signals
+* 4-way MUX for PCSEL (in accordance to 0, 1, 2, and 3)
+* 2-way for RA2SEL, to determine whether to use rb or rc
+* 2-way for BSEL
+* 4-way for WDSEL, to determine whether to pass PC + 4, result of ALU, or main memory read into rc

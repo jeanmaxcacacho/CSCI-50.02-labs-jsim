@@ -97,6 +97,11 @@ Xjump rd1_[31:0] jmp[31:0] join
 
 * Branch Target
 
+* ensure sign extended constant is word-aligned (divisible by 4)
+Xbranch1 c15#17 c[14:0] 0#3 vdd 0#3 shifted[31:0] shift32
+* mickey_mouse node is a flag for whether or not overflow occurred
+Xbranch2 0#23 pc[8:0] 0#29 vdd 0#3 pcpf[31:0] mickey_mouse[1:0] add32
+Xbranch3 pcpf[31:0] shifted[31:0] 0 br[31:0] mickey_mouse[3:2] add32
 
 * Reset Logic
 

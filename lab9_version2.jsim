@@ -93,7 +93,7 @@ Xz2 temp[7:4] temp[3:0] temp_final[1:0] nand4
 Xz3 temp_final[1:0] z nor2
 
 * Jump Target
-
+Xjump rd1_[31:0] jmp[31:0] join
 
 * Branch Target
 

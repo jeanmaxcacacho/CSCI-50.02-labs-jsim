@@ -11,20 +11,20 @@ Xalu rd1_[31:0] b[31:0] alufn[5:0] alu[31:0] alu32
 * Instruction and Memory File
 Xmemory  vdd  0    0   pc[8:2]    inst[31:0]
 +        vdd  0    0   mema[8:2]  memrd[31:0]
-+        0    clk  wr  mema[8:2]  memwd[31:0]
++        0    clk3  wr  mema[8:2]  memwd[31:0]
 + $memory width=32 nlocations=128 file="lab7.bin"
 
 * Memory connections
 Xmemwd1 rd2_[31:0] memwd[31:0] join
 * bits 0-1 equate to decimal numbers 0-3, which would fall out of line if used 
 Xmema1 alu[8:2] mema[8:2] join
-.connect 0 mem[1:0]
+.connect 0 mema[1:0]
 
 
 * Register File
 Xregisters  vdd  0    0      ra1_[4:0]  rd1_[31:0]
 +           vdd  0    0      ra2_[4:0]  rd2_[31:0]
-+           0    clk  werf_  wa[4:0]    wd[31:0]
++           0    clk3  werf_  wa[4:0]    wd[31:0]
 + $memory width=32 nlocations=32 contents=(
 +   0 0 0 0 0 0 0 0
 +   0 0 0 0 0 0 0 0
@@ -34,11 +34,11 @@ Xregisters  vdd  0    0      ra1_[4:0]  rd1_[31:0]
 
 * Special Case for r31
 * last 4 bits and together, 31 expects 1
-Xsub1 wa[4:1] temp1 and4 
+Xsub1 wa[4:1] sc1 and4 
 * if LSB also equals 1, nand will force to off
-Xsub2 temp1 wa0 temp2 nand2 
-* when temp2 off, werf_ automatically gets switched off
-Xsub3 temp2 werf werf_ and2 
+Xsub2 sc1 wa0 sc2 nand2 
+* when sc2 off, werf_ automatically gets switched off
+Xsub3 sc2 werf werf_ and2 
 
 * Control Logic
 Xcontrol  vdd  0  0  z opcode[5:0]  control[13:0]
@@ -68,7 +68,7 @@ Xcontrol  vdd  0  0  z opcode[5:0]  control[13:0]
 .ends
 
 * MUX for PCSEL
-Xpcsel pcsel1#32 pcsel0#32 pcpf[31:0] br[31:0] jmp[31:0] pchalt[31:0] pcout[31:0] mux4
+Xpcsel pcsel1#32 pcsel0#32 pcpf[31:0] br[31:0] jmp[31:0] pc[31:0] pcout[31:0] mux4
 
 * Define RA1
 Xra1 ra[4:0] ra1_[4:0] join
@@ -77,7 +77,7 @@ Xra1 ra[4:0] ra1_[4:0] join
 Xrc rc[4:0] wa[4:0] join
 
 * MUX for RA2SEL to determine RA2
-Xra2 ra2sel rb[4:0] rc[4:0] ra2_[4:0] mux2
+Xra2 ra2sel#5 rb[4:0] rc[4:0] ra2_[4:0] mux2
 
 * MUX for BSEL
 * Recall that if C is used, it gets sign extended.
@@ -104,7 +104,15 @@ Xbranch2 0#23 pc[8:0] 0#29 vdd 0#3 pcpf[31:0] mickey_mouse[1:0] add32
 Xbranch3 pcpf[31:0] shifted[31:0] 0 br[31:0] mickey_mouse[3:2] add32
 
 * Reset Logic
+Xresetpc reset#32 pcnext[31:0] 0#32 pc[31:0] mux2
+Xresetw reset1#2 control1 control0 0#2 wr werf mux2
+Xpcnext pcout[31:0] clk3#32 pcnext[31:0] dreg
 
+Wreset reset nrz(0, 5, 50ns, 0ns, 0.001ns, 0.001ns)
++ 1 0
+
+Wreset1 reset1 nrz(0, 5, 25ns, 0ns, 0.001ns, 0.001ns)
++ 1 0
 
 * Control Signal Anatomy
 Xjcontrola control[13:12] pcsel[1:0] join
@@ -112,8 +120,8 @@ Xjcontrolb control11      ra2sel     join
 Xjcontrolc control10      bsel       join
 Xjcontrold control[9:8]   wdsel[1:0] join
 Xjcontrole control[7:2]   alufn[5:0] join
-Xjcontrolf control1       wr         join
-Xjcontrolg control0       werf       join
+*Xjcontrolf control1       wr         join
+*Xjcontrolg control0       werf       join
 
 * Instruction Signal Anatomy
 Xjinsta inst[31:26] opcode[5:0] join
@@ -121,3 +129,20 @@ Xjinstb inst[25:21] rc[4:0]     join
 Xjinstc inst[20:16] ra[4:0]     join
 Xjinstd inst[15:11] rb[4:0]     join
 Xjinste inst[15:0]  c[15:0]     join
+
+.tran 1500ns
+.plot hd(pc[8:0])
+.plot hd(pcout[8:0])
+.plot betaop(opcode[5:0])
+.plot d(ra[4:0])
+.plot d(rb[4:0])
+.plot d(rc[4:0])
+.plot sd(c[15:0])
+.plot d(werf_)
+.plot d(wr)
+.plot sd(alu[31:0])
+.plot hd(mema[8:0])
+.plot hd(memrd[31:0])
+.plot hd(memwd[31:0])
+.plot d(wa[4:0])
+.plot hd(wd[31:0])

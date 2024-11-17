@@ -5,13 +5,21 @@
 
 .include "main.jsim"
 
-* ALU in header file
+* ALU
+Xalu rd1_[31:0] b[31:0] alufn[5:0] alu[31:0] alu32
 
 * Instruction and Memory File
 Xmemory  vdd  0    0   pc[8:2]    inst[31:0]
 +        vdd  0    0   mema[8:2]  memrd[31:0]
 +        0    clk  wr  mema[8:2]  memwd[31:0]
 + $memory width=32 nlocations=128 file="lab7.bin"
+
+* Memory connections
+Xmemwd1 rd2_[31:0] memwd[31:0] join
+* bits 0-1 equate to decimal numbers 0-3, which would fall out of line if used 
+Xmema1 alu[8:2] mema[8:2] join
+.connect 0 mem[1:0]
+
 
 * Register File
 Xregisters  vdd  0    0      ra1_[4:0]  rd1_[31:0]
@@ -65,6 +73,9 @@ Xpcsel pcsel1#32 pcsel0#32 pcpf[31:0] br[31:0] jmp[31:0] pchalt[31:0] pcout[31:0
 * Define RA1
 Xra1 ra[4:0] ra1_[4:0] join
 
+* Connecting rc to WA in register
+Xrc rc[4:0] wa[4:0] join
+
 * MUX for RA2SEL to determine RA2
 Xra2 ra2sel rb[4:0] rc[4:0] ra2_[4:0] mux2
 
@@ -81,11 +92,11 @@ Xz1 rd1_[31:0:4] rd1_[30:0:4] rd1_[29:0:4] rd1_[28:0:4] temp[7:0] nor4
 Xz2 temp[7:4] temp[3:0] temp_final[1:0] nand4
 Xz3 temp_final[1:0] z nor2
 
-* Program Counter
-
 * Jump Target
 
+
 * Branch Target
+
 
 * Reset Logic
 

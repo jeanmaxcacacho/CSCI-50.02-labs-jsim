@@ -66,14 +66,29 @@ Xcontrol  vdd  0  0  z opcode[5:0]  control[13:0]
   .connect S T
 .ends
 
-* MUX for PCSEL
-Xpcsel pcsel1#32 pcsel0#32 pcpf[31:0] jmp[31:0] br[31:0] pc[31:0] pcout[31:0] mux4
+* Control Signal Anatomy
+Xjcontrola control[13:12] pcsel[1:0] join
+Xjcontrolb control11      ra2sel     join
+Xjcontrolc control10      bsel       join
+Xjcontrold control[9:8]   wdsel[1:0] join
+Xjcontrole control[7:2]   alufn[5:0] join
+* NOTE: wr and werf connections are now covered by Reset Logic 
+
+* Instruction Signal Anatomy
+Xjinsta inst[31:26] opcode[5:0] join
+Xjinstb inst[25:21] rc[4:0]     join
+Xjinstc inst[20:16] ra[4:0]     join
+Xjinstd inst[15:11] rb[4:0]     join
+Xjinste inst[15:0]  c[15:0]     join
 
 * Define RA1
 Xra1 ra[4:0] ra1_[4:0] join
 
 * Connecting rc to WA in register
 Xrc rc[4:0] wa[4:0] join
+
+* MUX for PCSEL
+Xpcsel pcsel1#32 pcsel0#32 pcpf[31:0] jmp[31:0] br[31:0] pc[31:0] pcout[31:0] mux4
 
 * MUX for RA2SEL to determine RA2
 Xra2 ra2sel#5 rb[4:0] rc[4:0] ra2_[4:0] mux2
@@ -110,23 +125,10 @@ Xpcnext pcout[31:0] clk3#32 pcnext[31:0] dreg
 Wreset reset nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
 + 1 0
 
+* A shorter reset signal is used in order to allow for wr (and similarly, werf) to be 0 during the time the main reset signal is 1.
+* (See reference in COA for more details)
 Wreset1 reset1 nrz(0, 5, 19ns, 0ns, 0.001ns, 0.001ns)
 + 1 0
-
-* Control Signal Anatomy
-Xjcontrola control[13:12] pcsel[1:0] join
-Xjcontrolb control11      ra2sel     join
-Xjcontrolc control10      bsel       join
-Xjcontrold control[9:8]   wdsel[1:0] join
-Xjcontrole control[7:2]   alufn[5:0] join
-* NOTE: wr and werf connections are now covered by Reset Logic 
-
-* Instruction Signal Anatomy
-Xjinsta inst[31:26] opcode[5:0] join
-Xjinstb inst[25:21] rc[4:0]     join
-Xjinstc inst[20:16] ra[4:0]     join
-Xjinstd inst[15:11] rb[4:0]     join
-Xjinste inst[15:0]  c[15:0]     join
 
 * For plotting
 Xjdisplaya ra2_b_wdsel[3:0] ra2sel bsel wdsel[1:0] join

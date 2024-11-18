@@ -3,106 +3,27 @@
 * ONG, Paolo Gabriel
 
 
-.include "8clocks.jsim"
-.include "nominal.jsim"
-.include "stdcell.jsim"
+.include "main.jsim"
 
+* ALU
+Xalu rd1_[31:0] b[31:0] alufn[5:0] alu[31:0] alu32
 
-* full-adder; no need to change
-.subckt fa a b c_in sum c_out
-Xsub1 a b axorb xor2
-Xsub2 axorb c_in sum xor2
-Xsub3 a b firstnand nand2
-Xsub4 axorb c_in secondnand nand2
-Xsub5 firstnand secondnand c_out nand2
-.ends
-
-
-* 32-bit full-adder
-.subckt add32 a[31:0] b[31:0] c_in0 sum[31:0] c_out[31:30]
-Xsub1 a[31:0] b[31:0] c_out[30:0] c_in0 sum[31:0] c_out[31:0] fa
-.ends
-
-
-* 32-bit increment
-.subckt counter32 reset a[31:0] f[31:0] clk
-Xsum a[31:0] f[31:0] 0 sum[31:0] c31 c30 add32
-Xmux2 reset#32 sum[31:0] 0#32 next_val[31:0] mux2
-Xdreg next_val[31:0] clk#32 f[31:0] dreg
-.ends
-
-
-* 32-bit adder-subtractor
-.subckt as32 a[31:0] b[31:0] op0 fas[31:0] n v z
-Xinvert op0#32 b[31:0] notb[31:0] xor2
-
-Xadd a[31:0] notb[31:0] op0 fas[31:0] c31 c30 add32
-
-.connect fas31 n
-
-Xoverflow c31 c30 v xor2
-
-Xz1 fas[31:0:4] fas[30:0:4] fas[29:0:4] fas[28:0:4] temp[7:0] nor4
-Xz2 temp[7:4] temp[3:0] temp_final[1:0] nand4
-Xz3 temp_final[1:0] z nor2
-.ends
-
-
-* 32-bit comparator
-.subckt cmp32 n v z op[2:1] fcmp[31:0]
-Xsub1 n v nv xor2
-Xsub2 op1 z opz nand2
-Xsub3 op2 nv opnv nand2
-Xsub4 opz opnv fcmp0 nand2
-
-.connect fcmp[31:1] 0
-.ends
-
-* 32-bit bitwise boolean circuit
-.subckt bool32 a[31:0] b[31:0] op[3:0] fbool[31:0]
-Xmux4 a[31:0] b[31:0] op0#32 op1#32 op2#32 op3#32 fbool[31:0] mux4
-.ends
-
-* 32-bit shifter
-.subckt shift32 a[31:0] b[4:0] op[1:0] fshift[31:0]
-*choose either left or right shift
-Xwhich1 op0#32 a[31:0] a[0:31] c[31:0] mux2
-*determine sign bit
-Xsign1 a31 op1 sign and2 
-
-*16-bit shift (to the left)
-Xsixteen1 b4#32 c[31:0] c[15:0] sign#16 d[31:0] mux2 
-*8-bit shift
-Xeight1 b3#32 d[31:0] d[23:0] sign#8 e[31:0] mux2 
-*4-bit shift
-Xfour1 b2#32 e[31:0] e[27:0] sign#4 f[31:0] mux2 
-*2-bit shift
-Xtwo1 b1#32 f[31:0] f[29:0] sign#2 g[31:0] mux2 
-*1-bit shift
-Xone1 b0#32 g[31:0] g[30:0] sign h[31:0] mux2
-*flip or not again depending on shift chosen
-Xwhich2 op0#32 h[31:0] h[0:31] fshift[31:0] mux2
-.ends
-
-* 32-bit ALU
-.subckt alu32 a[31:0] b[31:0] alufn[5:0] f[31:0]
-Xas32 a[31:0] b[31:0] alufn0 fas[31:0] n v z as32
-Xbool32 a[31:0] b[31:0] alufn[3:0] fbool[31:0] bool32
-Xshift32 a[31:0] b[4:0] alufn[1:0] fshift[31:0] shift32
-Xcmp32 n v z alufn[2:1] fcmp[31:0] cmp32
-Xop alufn5#32 alufn4#32 fas[31:0] fshift[31:0] fbool[31:0] fcmp[31:0] f[31:0] mux4 
-.ends
-
-* Control Logic
-.connect clk3 clk *it should probably be safe to keep using "clk" as the universal clk input
+* Instruction and Memory File
 Xmemory  vdd  0    0   pc[8:2]    inst[31:0]
 +        vdd  0    0   mema[8:2]  memrd[31:0]
-+        0    clk  wr  mema[8:2]  memwd[31:0]
-+ $memory width=32 nlocations=128 file="lab7.bin"
++        0    clk3  wr  mema[8:2]  memwd[31:0]
++ $memory width=32 nlocations=128 file="lab8check.bin"
 
+* Memory connections
+Xmemwd1 rd2_[31:0] memwd[31:0] join
+* bits 0-1 equate to decimal numbers 0-3, which would misalign pc if used 
+Xmema1 alu[8:2] mema[8:2] join
+.connect 0 mema[1:0]
+
+* Register File
 Xregisters  vdd  0    0      ra1_[4:0]  rd1_[31:0]
 +           vdd  0    0      ra2_[4:0]  rd2_[31:0]
-+           0    clk  werf_  wa[4:0]    wd[31:0]
++           0    clk3  werf_  wa[4:0]    wd[31:0]
 + $memory width=32 nlocations=32 contents=(
 +   0 0 0 0 0 0 0 0
 +   0 0 0 0 0 0 0 0
@@ -110,6 +31,15 @@ Xregisters  vdd  0    0      ra1_[4:0]  rd1_[31:0]
 +   0 0 0 0 0 0 0 0
 + )
 
+* Special Case for r31
+* last 4 bits and together, 31 expects 1
+Xsub1 wa[4:1] sc1 and4 
+* if LSB also equals 1, nand will force to off
+Xsub2 sc1 wa0 sc2 nand2 
+* when sc2 off, werf_ automatically gets switched off
+Xsub3 sc2 werf werf_ and2 
+
+* Control Logic
 Xcontrol  vdd  0  0  z opcode[5:0]  control[13:0]
 + $memory width=14 nlocations=128 contents=(
 +   0b11000000000000 0b11000000000000 0b11000000000000 0b11000000000000 0b11000000000000 0b11000000000000 0b11000000000000 0b11000000000000
@@ -131,46 +61,99 @@ Xcontrol  vdd  0  0  z opcode[5:0]  control[13:0]
 +   0b00010101100001 0b00010101111001 0b00010101011001 0b11000000000000 0b00010110000001 0b00010110000101 0b00010110001101 0b11000000000000
 + )
 
+* Connector subcircuit
 .subckt join S T
   .connect S T
 .ends
 
+* MUX for PCSEL
+Xpcsel pcsel1#32 pcsel0#32 pcpf[31:0] jmp[31:0] br[31:0] pc[31:0] pcout[31:0] mux4
+
+* Define RA1
+Xra1 ra[4:0] ra1_[4:0] join
+
+* Connecting rc to WA in register
+Xrc rc[4:0] wa[4:0] join
+
+* MUX for RA2SEL to determine RA2
+Xra2 ra2sel#5 rb[4:0] rc[4:0] ra2_[4:0] mux2
+
+* MUX for BSEL
+* Recall that if C is used, it gets sign extended.
+Xbsel bsel#32 rd2_[31:0] c15#17 c[14:0] b[31:0] mux2
+
+* MUX for WDSEL
+* 0 = pass PC + 4 | 1 = ALU output | 2 = memory read
+Xwdsel wdsel1#32 wdsel0#32 pcpf[31:0] memrd[31:0] alu[31:0] 0#32 wd[31:0] mux4
+
+* 32-bit NOR gate for Z
+Xz1 rd1_[31:0:4] rd1_[30:0:4] rd1_[29:0:4] rd1_[28:0:4] temp[7:0] nor4
+Xz2 temp[7:4] temp[3:0] temp_final[1:0] nand4
+Xz3 temp_final[1:0] z nor2
+
+* Jump Target
+Xjump rd1_[31:0] jmp[31:0] join
+
+* Branch Target
+* ensure sign extended constant is word-aligned (divisible by 4)
+Xbranch1 c15#17 c[14:0] 0#3 vdd 0#3 shifted[31:0] shift32
+* mickey_mouse node is a flag for whether or not overflow occurred
+Xbranch2 0#23 pc[8:0] 0#29 vdd 0#3 pcpf[31:0] mickey_mouse[1:0] add32
+Xbranch3 pcpf[31:0] shifted[31:0] 0 br[31:0] mickey_mouse[3:2] add32
+
+* Reset Logic
+Xresetpc reset#32 pcnext[31:0] 0#32 pc[31:0] mux2
+Xresetw reset1 control1 0 wr mux2
+Xresetw1 reset1 control0 0 werf mux2
+Xpcnext pcout[31:0] clk3#32 pcnext[31:0] dreg
+
+Wreset reset nrz(0, 5, 20ns, 0ns, 0.001ns, 0.001ns)
++ 1 0
+
+Wreset1 reset1 nrz(0, 5, 19ns, 0ns, 0.001ns, 0.001ns)
++ 1 0
+
+* Control Signal Anatomy
 Xjcontrola control[13:12] pcsel[1:0] join
 Xjcontrolb control11      ra2sel     join
 Xjcontrolc control10      bsel       join
 Xjcontrold control[9:8]   wdsel[1:0] join
 Xjcontrole control[7:2]   alufn[5:0] join
-Xjcontrolf control1       wr         join
-Xjcontrolg control0       werf       join
+* NOTE: wr and werf connections are now covered by Reset Logic 
 
+* Instruction Signal Anatomy
 Xjinsta inst[31:26] opcode[5:0] join
 Xjinstb inst[25:21] rc[4:0]     join
 Xjinstc inst[20:16] ra[4:0]     join
 Xjinstd inst[15:11] rb[4:0]     join
 Xjinste inst[15:0]  c[15:0]     join
 
-* TO-DO: Reset Logic
-* First, check first if the PCSEL code yields a HALT value. This will only be the case when PCSEL = 3 (11) which from the
-* CSCI 50.01 slides means it's handling an illegal operation. (This will be our first reset value)
-* Next, make a waveform value for reset, which first starts at 1 until the first rising clock edge, then to 0 afterwards. (This will be our second reset value)
-* NOR the 2 reset values. Since NOR will be 0 so long as there's a 1, my current hypothesis is that this acts as a
-* "go signal" of sorts when it's ensured that it's not an illegal operation and everything is completely reset 
+* For plotting
+Xjdisplaya ra2_b_wdsel[3:0] ra2sel bsel wdsel[1:0] join
+Xjdisplayb wr_werf[1:0]     wr werf                join
+
+.tran 2000ns
+.plot d(pc[8:0])
+.plot betaop(opcode[5:0])
+.plot d(ra[4:0])
+.plot d(rb[4:0])
+.plot d(rc[4:0])
+.plot sd(c[15:0])
+.plot b(pcsel[1:0])
+.plot b(ra2_b_wdsel[3:0])
+.plot b(wr_werf[1:0])
+.plot b(alufn[5:0])
+.plot sd(alu[31:0])
+.plot sd(rd1_[31:0])
+.plot sd(rd2_[31:0])
+.plot sd(wd[31:0])
+.plot d(mema[8:0])
+.plot sd(memrd[31:0])
+.plot sd(memwd[31:0])
+.plot d(wa[4:0])
+.plot hd(wd[31:0])
 
 
-* TO-DO: Program Counter
-* Modify the 32-bit counter with the reset logic in mind, wherein if reset1 = 0 then set the entire PC to 0.
 
-* TO-DO: Branch Target
-* Perform a 2-bit shift on the SEXT literal (c[15:0]) then add to Program Counter.
 
-* TO-DO: Z
-* 32-bit NOR gate (see subtractor)
 
-* TO-DO: Memory and Registers
-* Reset logic as well as verifying if the register can be written into (recall verifying r31)
-
-* TO-DO: MUX for Control Signals
-* 4-way MUX for PCSEL (in accordance to 0, 1, 2, and 3)
-* 2-way for RA2SEL, to determine whether to use rb or rc
-* 2-way for BSEL
-* 4-way for WDSEL, to determine whether to pass PC + 4, result of ALU, or main memory read into rc
